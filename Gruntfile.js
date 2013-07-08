@@ -229,7 +229,7 @@ module.exports = function( grunt ) {
   grunt.registerTask('travis', 'test');
 
   // Build
-  grunt.registerTask('build', function (config) {
+  grunt.registerTask('build', function (custom, minify) {
     var tasks = [
       'clean',
       'generateinit',
@@ -241,23 +241,24 @@ module.exports = function( grunt ) {
       'jshint:files'
     ];
 
-    // If 'config' flag is sent, assume:
+    // If 'custom' flag is sent, assume:
     // 1. No need to JSHint files, user does not care.
     // 2. Make uglify conditional.
     // 3. Apply any custom config options
-    if (config) {
+    if (custom) {
       if (tasks.indexOf("jshint:files") !== -1) {
         tasks.splice(tasks.indexOf("jshint:files"), 1);
       }
 
-      if (!config.minify && tasks.indexOf("uglify") !== -1) {
+      if (!minify && tasks.indexOf("uglify") !== -1) {
         tasks.splice(tasks.indexOf("uglify"), 1);
       }
     }
 
     // Apply custom config
-    var modConfig = grunt.file.readJSON(process.cwd() + '/lib/config-all.json');
-    grunt.config.set("config", grunt.util._.extend(modConfig, config));
+    if (!grunt.config("config")) {
+      grunt.config.set("config", grunt.file.readJSON(process.cwd() + '/lib/config-all.json'));
+    }
 
     grunt.task.run(tasks);
   });
