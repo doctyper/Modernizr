@@ -230,6 +230,8 @@ module.exports = function( grunt ) {
 
   // Build
   grunt.registerTask('build', function (custom, minify) {
+    minify = minify || false;
+
     var tasks = [
       'clean',
       'generateinit',
@@ -250,7 +252,7 @@ module.exports = function( grunt ) {
         tasks.splice(tasks.indexOf("jshint:files"), 1);
       }
 
-      if (!minify && tasks.indexOf("uglify") !== -1) {
+      if (minify !== "true" && tasks.indexOf("uglify") !== -1) {
         tasks.splice(tasks.indexOf("uglify"), 1);
       }
     }
