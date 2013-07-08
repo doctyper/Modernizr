@@ -5,7 +5,6 @@ module.exports = function( grunt ) {
 
   var fs = require('fs');
   var path = require('path');
-  var modConfig = grunt.file.readJSON('lib/config-all.json');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -203,6 +202,7 @@ module.exports = function( grunt ) {
     this.filesSrc.forEach(function(filepath) {
       // Remove `define("modernizr-init" ...)` and `define("modernizr-build" ...)`
       var mod = grunt.file.read(filepath).replace(/define\("modernizr-(init|build)", function\(\)\{\}\);/g, '');
+      var modConfig = grunt.config.get("config");
 
       // Hack the prefix into place. Anything is way to big for something so small.
       if ( modConfig && modConfig.classPrefix ) {
@@ -213,6 +213,7 @@ module.exports = function( grunt ) {
   });
 
   grunt.registerMultiTask('generateinit', "Generate Init file", function() {
+    var modConfig = grunt.config.get("config");
     var requirejs = require('requirejs');
     requirejs.config({
       appDir : __dirname + '/src/',
@@ -228,6 +229,37 @@ module.exports = function( grunt ) {
   grunt.registerTask('travis', 'test');
 
   // Build
-  grunt.registerTask('build', ['clean', 'generateinit', 'requirejs', 'copy', 'clean:postbuild', 'stripdefine', 'uglify', 'jshint']);
-  grunt.registerTask('default', ['build', 'qunit']);
+  grunt.registerTask('build', function (config) {
+    var tasks = [
+      'clean',
+      'generateinit',
+      'requirejs',
+      'copy',
+      'clean:postbuild',
+      'stripdefine',
+      'uglify',
+      'jshint:files'
+    ];
+
+    // If 'config' flag is sent, assume:
+    // 1. No need to JSHint files, user does not care.
+    // 2. Make uglify conditional.
+    // 3. Apply any custom config options
+    if (config) {
+      if (tasks.indexOf("jshint:files") !== -1) {
+        tasks.splice(tasks.indexOf("jshint:files"), 1);
+      }
+
+      if (!config.minify && tasks.indexOf("uglify") !== -1) {
+        tasks.splice(tasks.indexOf("uglify"), 1);
+      }
+    }
+
+    // Apply custom config
+    var modConfig = grunt.file.readJSON(process.cwd() + '/lib/config-all.json');
+    grunt.config.set("config", grunt.util._.extend(modConfig, config));
+
+    grunt.task.run(tasks);
+  });
+  grunt.registerTask('default', ['build', 'jshint', 'qunit']);
 };
