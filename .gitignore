@@ -1,6 +1,5 @@
 node_modules
 modernizr.min.js
-metadata.json
 build
 dist
 tmp
